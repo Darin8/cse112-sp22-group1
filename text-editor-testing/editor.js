@@ -1,8 +1,9 @@
 let textBlock = document.getElementById("textBlock");
+textBlock.focus();
 
 textBlock.addEventListener("input",() =>{
 	let content = textBlock.innerHTML;
-	// console.log(content);
+	console.log(content);
 	if (content == "#&nbsp;"){
 		while(textBlock.classList.length > 0){
 			textBlock.classList.remove(textBlock.classList[0]);
@@ -27,6 +28,12 @@ textBlock.addEventListener("input",() =>{
 		if (textBlock.textContent == ""){
 			textBlock.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
 		}
+	} else if (content == "<div><br></div>"){
+		while(textBlock.classList.length > 0){
+			textBlock.classList.remove(textBlock.classList[0]);
+		}
+		textBlock.setAttribute("placeholder", 'Type "/" to create a block');
+		textBlock.innerHTML = "";
 	}
 });
 
@@ -43,7 +50,7 @@ textBlock.onkeydown = (e)=>{
 		}
 	} else if (key == 13){
 		let content = textBlock.innerHTML;
-		console.log(content);
+		// console.log(content);
 		if (content == "/h1"){
 			while(textBlock.classList.length > 0){
 				textBlock.classList.remove(textBlock.classList[0]);
