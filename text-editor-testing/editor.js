@@ -5,133 +5,60 @@ var idTable = [];
 var controller = {
 	currentBlockIndex: 0,
 	addNewBlock: () => {
-		let newBlock = createBlock();
-		contentWrapper.appendChild(newBlock);
-		newBlock.focus();
-		addListeners(newBlock);
+		let newBlock = new TextBlock(controller, (success) => {
+			console.log(blockArray.length - 1);
+			if (controller.currentBlockIndex < blockArray.length - 1){
+				contentWrapper.insertBefore(newBlock, blockArray[controller.currentBlockIndex + 1]);
+				blockArray.splice(controller.currentBlockIndex + 1, 0, newBlock);
+				controller.currentBlockIndex = controller.currentBlockIndex + 1;
+			} else {
+				contentWrapper.appendChild(newBlock);
+				blockArray.push(newBlock);
+				controller.currentBlockIndex = blockArray.length - 1;
+			}
+			newBlock.focus();
+		});
 	},
 	moveToNextBlock: () => {
 		let currentBlock = blockArray[controller.currentBlockIndex];
 		console.log("excecutes");
 		if (controller.currentBlockIndex < blockArray.length - 1){
-			console.log("in here")
+			console.log("in here");
 			let nextBlock = blockArray[controller.currentBlockIndex + 1];
-			let selection = window.getSelection();
-			let range = selection.getRangeAt(0);
-			let currentPosition = range.endOffset;
-			selection = window.getSelection();
-			let setPos = document.createRange();
-			setPos.setStart(nextBlock, 1);
-			setPos.collapse(true);
-			selection.removeAllRanges();
-			nextBlock.focus();
+			nextBlock.moveToSpot(currentBlock.currentPointerSpot, false);
 		}
+	},
+	moveToPreviousBlock: () => {
+		let currentBlock = blockArray[controller.currentBlockIndex];
+		console.log("excecutes");
+		if (controller.currentBlockIndex > 0){
+			console.log("in here");
+			let nextBlock = blockArray[controller.currentBlockIndex - 1];
+			nextBlock.moveToSpot(currentBlock.currentPointerSpot, false);
+		}
+	},
+	removeBlock: () => {
+		let currentBlock = blockArray[controller.currentBlockIndex];
+		blockArray.splice(controller.currentBlockIndex, 1);
+		controller.currentBlockIndex = (controller.currentBlockIndex == 0) ? controller.currentBlockIndex : controller.currentBlockIndex - 1;
+		console.log(controller.currentBlockIndex);
+		let nextBlock = blockArray[controller.currentBlockIndex];
+		console.log(nextBlock);
+		nextBlock.moveToSpot(0, false);
+		
+		contentWrapper.removeChild(currentBlock);
 	}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	let newBlock = createBlock();
-	contentWrapper.appendChild(newBlock);
-	newBlock.focus();
-	addListeners(newBlock);
+	let newBlock = new TextBlock(controller, (success) => {
+		contentWrapper.appendChild(newBlock);
+		blockArray.push(newBlock);
+		controller.currentBlockIndex = blockArray.length - 1;
+		newBlock.focus();
+	});
 });
 
-function createBlock(){
-	let newElement = document.createElement("div");
-	newElement.id = "textBlock";
-	newElement.contentEditable = true;
-	newElement.setAttribute("placeholder", 'Type "/" to create a block');
-	console.log(newElement);
-	return newElement;
-}
-
-function addListeners(block){
-	block.addEventListener("input",() =>{
-		let content = textBlock.innerHTML;
-		console.log(content);
-		if (content == "#&nbsp;"){
-			while(block.classList.length > 0){
-				block.classList.remove(block.classList[0]);
-			}
-			block.setAttribute("placeholder", "Header 1");
-			block.classList.add("header1");
-			block.innerHTML = "";
-		} else if (content == "##&nbsp;"){
-			while(block.classList.length > 0){
-				block.classList.remove(block.classList[0]);
-			}
-			block.setAttribute("placeholder", "Header 2");
-			block.classList.add("header2");
-			block.innerHTML = "";
-		} else if (content == "-&nbsp;"){
-			while(block.classList.length > 0){
-				block.classList.remove(block.classList[0]);
-			}
-			block.setAttribute("placeholder", 'Type "/" to create a block');
-			block.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
-		} else if (content.includes("<ul><li")){
-			if (block.textContent == ""){
-				block.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
-			}
-		} else if (content == "<div><br></div>"){
-			while(block.classList.length > 0){
-				block.classList.remove(block.classList[0]);
-			}
-			block.setAttribute("placeholder", 'Type "/" to create a block');
-			block.innerHTML = "";
-		}
-	});
-
-	block.onkeydown = (e)=>{
-		let key = e.keyCode || e.charCode;
-		if (key == 8 || key == 46){
-			console.log(block.innerHTML);
-			if(block.innerHTML == "" || block.innerHTML == '<ul><li class="notesList" placeholder="Note"></li></ul>' || block.innerHTML == "<ul><li><br></li></ul>"){
-				while(block.classList.length > 0){
-					block.classList.remove(block.classList[0]);
-				}
-				block.setAttribute("placeholder", 'Type "/" to create a block');
-				block.innerHTML = "";
-			}
-		} else if (key == 13){
-			let content = block.innerHTML;
-			if (content == "/h1"){
-				while(block.classList.length > 0){
-					block.classList.remove(block.classList[0]);
-				}
-				block.setAttribute("placeholder", "Header 1");
-				block.classList.add("header1");
-				block.innerHTML = "";
-				e.preventDefault();
-			} else if (content == "/h2"){
-				while(block.classList.length > 0){
-					block.classList.remove(block.classList[0]);
-				}
-				block.setAttribute("placeholder", "Header 2");
-				block.classList.add("header2");
-				block.innerHTML = "";
-				e.preventDefault();
-			} else if (content == "/note"){
-				while(block.classList.length > 0){
-					block.classList.remove(block.classList[0]);
-				}
-				block.setAttribute("placeholder", 'Type "/" to create a block');
-				block.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
-			} else {
-				controller.addNewBlock();
-				e.preventDefault();
-			}
-		} else if (key == 40){
-			console.log("here");
-			contentWrapper.contentEditable = true;
-		}
-	};
-
-	contentWrapper.onkeyup = (e) => {
-		let key = e.keyCode || e.charCode;
-		if (key == 40){
-			console.log("here");
-			contentWrapper.contentEditable = false;
-		}
-	}
-}
+document.addEventListener("click", (e) => {
+	console.log(e);
+});

@@ -5,10 +5,12 @@
 
 html, body, section, .full-height {
     height: 100%;
+    user-select: all;
 } 
 
 div{
     font-size: 18px;
+    line-height: 26px;
 }
 
 #textBlock {
@@ -37,12 +39,14 @@ div{
 
 .header1{
     font-size: 42px;
+    line-height: 50px;
     font-weight: bold;
     color: black;
 }
 
 .header2{
     font-size: 28px;
+    line-height: 36px;
     font-weight: bold;
     color: black;
 }
