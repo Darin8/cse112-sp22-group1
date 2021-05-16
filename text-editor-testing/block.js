@@ -3,6 +3,7 @@ import * as shadow from "./node_modules/shadow-selection-polyfill/shadow.js";
 var script = document.createElement("SCRIPT");
 script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js';
 script.type = 'text/javascript';
+const tabSize = 20;
 document.getElementsByTagName("head")[0].appendChild(script);
 
 export class TextBlock extends HTMLElement{
@@ -16,13 +17,18 @@ export class TextBlock extends HTMLElement{
             let blockTemplate = blockTemplateFile.getElementById("block");
             this.attachShadow({ mode: "open" });
             this.shadowRoot.appendChild(blockTemplate.content.cloneNode(true));
-            // console.log(this.shadowRoot.getSelection());
             this.root = this.shadowRoot;
             this.contentEditable = true;
             this.controller = controller;
+            this.shadowRoot.getElementById("textBlock").classList.add("unstylized");
             this.currentBlock = null;
-            this.currentPointerSpot = 0; 
-            this.setCurrentSpot();
+            this.currentPointerSpot = 0;
+            this.currentPointerHeight = 2;
+            if (this.controller.creatingFromBullet){
+                this.setupBullet();
+            }
+            this.tabLevel = controller.currentTabLevel;
+            this.setupTabLevel();
             callback(true);
         });
         
@@ -31,216 +37,226 @@ export class TextBlock extends HTMLElement{
 
     setCurrentSpot(){
         let container = this.shadowRoot.getElementById("textBlock");
-        // console.log(window.screenY + (window.outerHeight - window.innerHeight));
-        let sel = this.ownerDocument.getSelection();
-        if(this.ownerDocument.getSelection() != undefined){
-            if (sel.rangeCount > 0){
-                let range = shadow.getRange(this.shadowRoot);
-                if (range != undefined){
-                    let preCaretRange = range.cloneRange();
-                    preCaretRange.selectNodeContents(container);
-                    preCaretRange.setEnd(range.endContainer, range.endOffset);
-                    console.log(range.getClientRects()[0]);
-                    this.currentPointerSpot = preCaretRange.toString().length;
-                }
-            }
-        } else if ((sel = this.ownerDocument.selection) && sel.type != "Control"){
-            let textRange = sel.createRange();
-            let preCarretTextRange = this.ownerDocument.body.createTextRange();
-            preCarretTextRange.moveToElementText(container);
-            preCarretTextRange.setEndPoint("EndToEnd", textRange);
-            this.currentPointerSpot = (textRange.getClientRects()[0] != undefined) ? textRange.getClientRects()[0].x : preCarretTextRange.text.length + 10;
+        let range = shadow.getRange(this.shadowRoot);
+        if (range != undefined){
+            let preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(container);
+            preCaretRange.setEnd(range.endContainer, range.endOffset);
+            this.currentPointerSpot = (range.getClientRects()[0] != undefined) ? range.getClientRects()[0].x : (this.tabLevel * tabSize) + 18;
+            this.currentPointerHeight = (range.getClientRects()[0] != undefined) ? range.getClientRects()[0].y - container.getBoundingClientRect().top : 2;
+        } else {
+            this.currentPointerSpot = (this.tabLevel * tabSize) + 18;
+            this.currentPointerHeight = 2;
         }
         
     }
 
     moveToSpot(newSpot, up){
         let container = this.shadowRoot.getElementById("textBlock");
-        // let textRange = document.createRange();
-        // textRange.setStart(textRange.endContainer, container.textContent.length - 1);
-        // textRange.setEnd(textRange.endContainer, container.textContent.length - 1);
-        // textRange.collapse(false);
-        // window.getSelection().removeAllRanges();
-        // window.getSelection().addRange(textRange);
-        container.focus();
-        // let textRange = document.createRange();
-        // textRange.setStart(container, 0);
-        // textRange.collapse(true);
-        // window.getSelection().removeAllRanges();
-        // window.getSelection().addRange(textRange);
+        if (container.childNodes.length > 0){
+            if (!this.controller.resetPosition){
+                newSpot = this.currentPointerSpot;
+            }
+            container.focus();
+            let range = shadow.getRange(this.shadowRoot);
+            container.blur();
+            console.log(newSpot);
+            console.log(newSpot);
+            setTimeout(() => {
+                let offset = 0;
+                if (up) {
+                    offset = container.textContent.length;
+                }
+                range.setStart(container.childNodes[0], offset);
+                let currentCoordinate = range.getClientRects()[0].x;
+                let currentOffset = offset;
+                let counter = 0;
+                newSpot = Math.floor(newSpot);
+                while(counter < 1000){
+                    if (up){
+                        offset = (offset > 0) ? offset - 1 : offset;
+                    } else {
+                        offset = (offset < container.textContent.length) ? offset + 1 : offset;
+                    }
+                    range.setStart(container.childNodes[0], offset);
+                    range.collapse(true);
+                    let nextCoordinate = range.getClientRects()[0].x;
+                    if (Math.abs(Math.floor(currentCoordinate) - newSpot) <= Math.abs(Math.floor(nextCoordinate) - newSpot)){
+                        range.setStart(container.childNodes[0], currentOffset);
+                        break;
+                    }
+                    currentCoordinate = nextCoordinate;
+                    currentOffset = offset;
+                    counter += 1;
+                }
+                range.collapse(true);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                container.focus();
+            }, 0.01);
+        } else {
+            container.focus();
+        }
         
-        // if (textRange.getClientRects()[0] != undefined){
-        //     textRange.getClientRects()[0].x = this.currentPointerSpot;
-        // }
-        // console.log(textRange.getClientRects()[0]);
-        
-        // textRange.getClientRects()[0].x = this.currentPointerSpot;
-        // let container = this.shadowRoot.getElementById("textBlock");
-        // let yclickspot = this.getClientRects()[0].y + 4;
-        // let xclickspot = this.currentPointerSpot;
-        // if (up) {
-        //     // let lineHeight = container.classList.contains("header 1") ? 50 : ((container.classList.contains("header 2")) ? 36 : 26);
-        //     yclickspot = yclickspot + container.offsetHeight - 30;
-        // } else {
-        //     yclickspot = yclickspot + 16;
-        // }
-        // if (newSpot > this.currentPointerSpot){
-        //     xclickspot = newSpot;
-        // }
-        // console.log(yclickspot);
-        // console.log(window.screenY);
-        // console.log(window.innerHeight);
-        // yclickspot = yclickspot + window.screenY + (window.outerHeight - window.innerHeight);
-        // xclickspot =  window.screenX - xclickspot;
-        // jQuery(document.elementFromPoint(xclickspot, yclickspot)).click();
+    }
 
-        // const event = new FocusEvent('onfocusin', {
-        //     'screenX': xclickspot,
-        //     'screenY': yclickspot,
-        //     'relatedTarget': this,
-        //     'view': Window
-        // })
+    setupHeader1(){
+        let textBlock = this.shadowRoot.getElementById("textBlock");
+        while(textBlock.classList.length > 0){
+            textBlock.classList.remove(textBlock.classList[0]);
+        }
+        while(this.classList.length > 0){
+            this.classList.remove(this.classList[0]);
+        }
+        this.controller.creatingFromBullet = false;
+        textBlock.setAttribute("placeholder", "Header 1");
+        textBlock.classList.add("header1");
+        textBlock.innerHTML = "";
+    }
 
-        // const event = new MouseEvent('click', {
-        //     'screenX': xclickspot,
-        //     'screenY': yclickspot,
-        //     'bubbles': true,
-        //     'cancelable': true,
-        //     'view': window
-        // });
-        // console.log(event);
-        // container.focus();
-        
+    setupHeader2(){
+        let textBlock = this.shadowRoot.getElementById("textBlock");
+        while(textBlock.classList.length > 0){
+            textBlock.classList.remove(textBlock.classList[0]);
+        }
+        while(this.classList.length > 0){
+            this.classList.remove(this.classList[0]);
+        }
+        this.controller.creatingFromBullet = false;
+        textBlock.setAttribute("placeholder", "Header 2");
+        textBlock.classList.add("header2");
+        textBlock.innerHTML = "";
+    }
+
+    setupBullet(){
+        let textBlock = this.shadowRoot.getElementById("textBlock");
+        while(textBlock.classList.length > 0){
+            textBlock.classList.remove(textBlock.classList[0]);
+        }
+        while(this.classList.length > 0){
+            this.classList.remove(this.classList[0]);
+        }
+        this.controller.creatingFromBullet = true;
+        textBlock.setAttribute("placeholder", "Note");
+        this.classList.add("noteContainer");
+        textBlock.classList.add("note");
+        textBlock.innerHTML = "";
+    }
+
+    removeStyles(){
+        let textBlock = this.shadowRoot.getElementById("textBlock");
+        while(textBlock.classList.length > 0){
+            textBlock.classList.remove(textBlock.classList[0]);
+        }
+        while(this.classList.length > 0){
+            this.classList.remove(this.classList[0]);
+        }
+        textBlock.classList.add("unstylized");
+        textBlock.setAttribute("placeholder", 'Type "/" to create a block');
+        textBlock.innerHTML = "";
+        this.controller.creatingFromBullet = false;
+    }
+
+    setupTabLevel(){
+        this.style.position = "relative";
+        this.style.left = (this.tabLevel * tabSize) + "px";
+        this.setCurrentSpot();
+        this.controller.currentTabLevel = this.tabLevel;
     }
 
 	connectedCallback(){
 		let textBlock = this.shadowRoot.getElementById("textBlock");
 		textBlock.focus();
-        textBlock.onclick = (e) => {
-            textBlock.focus()
-        };
+
 		textBlock.addEventListener("input",() =>{
 			let content = textBlock.innerHTML;
+            console.log(content);
             this.setCurrentSpot();
-			console.log(content);
 			if (content == "#&nbsp;"){
-				while(textBlock.classList.length > 0){
-					textBlock.classList.remove(textBlock.classList[0]);
-				}
-				textBlock.setAttribute("placeholder", "Header 1");
-				textBlock.classList.add("header1");
-				textBlock.innerHTML = "";
+				this.setupHeader1();
 			} else if (content == "##&nbsp;"){
-				while(textBlock.classList.length > 0){
-					textBlock.classList.remove(textBlock.classList[0]);
-				}
-				textBlock.setAttribute("placeholder", "Header 2");
-				textBlock.classList.add("header2");
-				textBlock.innerHTML = "";
+				this.setupHeader2();
 			} else if (content == "-&nbsp;"){
-				while(textBlock.classList.length > 0){
-					textBlock.classList.remove(textBlock.classList[0]);
-				}
-				textBlock.setAttribute("placeholder", 'Type "/" to create a block');
-				textBlock.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
-			} else if (content.includes("<ul><li")){
-				if (textBlock.textContent == ""){
-					textBlock.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
-				}
+				this.setupBullet();
 			} else if (content == "<div><br></div>"){
-				while(textBlock.classList.length > 0){
-					textBlock.classList.remove(textBlock.classList[0]);
-				}
-				textBlock.setAttribute("placeholder", 'Type "/" to create a block');
-				textBlock.innerHTML = "";
-			}
+				this.removeStyles();
+			} else if (content == "<br>"){
+                textBlock.innerHTML = "";
+            } else if (textBlock.textContent != ""){
+                console.log("this");
+                this.controller.resetPosition = true;
+            }
 		});
 
         textBlock.onfocus = (e) => {
-            console.log(e);
+            this.controller.resetPosition = false;
             this.setCurrentSpot();
             this.controller.currentBlockIndex = blockArray.indexOf(this);
-            
-            // shadow.getRange(this.shadowRoot).getClientRects()[0].x = this.currentPointerSpot;
-            // 
-            // let yclickspot = this.getClientRects()[0].y + 4;
-            // let xclickspot = this.currentPointerSpot;
-            // if (up) {
-            //     // let lineHeight = container.classList.contains("header 1") ? 50 : ((container.classList.contains("header 2")) ? 36 : 26);
-            //     yclickspot = yclickspot + container.offsetHeight - 30;
-            // } else {
-            //     yclickspot = yclickspot + 16;
-            // }
-            // if (newSpot > this.currentPointerSpot){
-            //     xclickspot = newSpot;
-            // }
-            // console.log(yclickspot);
-            // console.log(window.screenY);
-            // console.log(window.innerHeight);
-            // yclickspot = yclickspot + window.screenY + (window.outerHeight - window.innerHeight);
-            // xclickspot = xclickspot + window.screenX;
-
+            this.controller.currentTabLevel = this.tabLevel;
+            if (this.classList.contains("noteContainer")){
+                this.controller.creatingFromBullet = true;
+            } else {
+                this.controller.creatingFromBullet = false;
+            }
         };
 
 		textBlock.onkeydown = (e)=>{
 			let key = e.key || e.keyCode;
-            console.log(this.currentPointerSpot);
-            console.log(textBlock.textContent.length);
 			if (key == "Backspace" || key == "Delete"){
+                console.log(textBlock.innerHTML);
+                let tabLevelNotZero = this.tabLevel > 0;
+                let currentSpot18 = this.currentPointerSpot - (this.tabLevel * tabSize) == 18;
+                let currentSpotNote = this.currentPointerSpot - (this.tabLevel * tabSize) == 38 && this.classList.contains("noteContainer");
+                let isAtBegining = currentSpot18 || currentSpotNote;
                 if (textBlock.innerHTML == "" && textBlock.getAttribute('placeholder') == 'Type "/" to create a block' && blockArray.length > 1){
-                    console.log("hello");
                     this.controller.removeBlock();
-                } else if(textBlock.innerHTML == "" || textBlock.innerHTML == '<ul><li class="notesList" placeholder="Note"></li></ul>' || textBlock.innerHTML == "<ul><li><br></li></ul>" || textBlock.innerHTML == "<br>"){
-					while(textBlock.classList.length > 0){
-						textBlock.classList.remove(textBlock.classList[0]);
-					}
-					textBlock.setAttribute("placeholder", 'Type "/" to create a block');
-					textBlock.innerHTML = "";
-				}
+                } else if((textBlock.innerHTML == "" || textBlock.innerHTML == "<br>") && this.tabLevel == 0){
+					this.removeStyles();
+				} else if (tabLevelNotZero && isAtBegining){
+                    this.tabLevel -= 1;
+                    this.setupTabLevel();
+                }
 			} else if (key == "Enter"){
 				let content = textBlock.innerHTML;
 				if (content == "/h1"){
-					while(textBlock.classList.length > 0){
-						textBlock.classList.remove(textBlock.classList[0]);
-					}
-					textBlock.setAttribute("placeholder", "Header 1");
-					textBlock.classList.add("header1");
-					textBlock.innerHTML = "";
+					this.setupHeader1();
 					e.preventDefault();
 				} else if (content == "/h2"){
-					while(textBlock.classList.length > 0){
-						textBlock.classList.remove(textBlock.classList[0]);
-					}
-					textBlock.setAttribute("placeholder", "Header 2");
-					textBlock.classList.add("header2");
-					textBlock.innerHTML = "";
+					this.setupHeader2()
 					e.preventDefault();
 				} else if (content == "/note"){
-					while(textBlock.classList.length > 0){
-						textBlock.classList.remove(textBlock.classList[0]);
-					}
-					textBlock.setAttribute("placeholder", 'Type "/" to create a block');
-					textBlock.innerHTML = "<ul><li class='notesList' placeholder='Note'></li></ul>";
+					this.setupBullet();
+                    e.preventDefault();
 				} else {
+                    this.controller.resetPosition = false;
                     this.controller.addNewBlock();
                     e.preventDefault();
                 }
 			} else if (key == "ArrowDown"){
-                if (this.currentPointerSpot == textBlock.textContent.length){
+                let lineheight = (textBlock.classList.contains("header1")) ? 50 : ((textBlock.classList.contains("header2")) ? 36 : 26);
+                if (this.currentPointerHeight > textBlock.offsetHeight - lineheight){
                     this.controller.moveToNextBlock();
                 } 
             } else if (key == "ArrowUp"){
-                if (this.currentPointerSpot == 0){
+                let lineheight = (textBlock.classList.contains("header1")) ? 50 : ((textBlock.classList.contains("header2")) ? 36 : 26);
+                if (this.currentPointerHeight < lineheight){
                     this.controller.moveToPreviousBlock();
                 } 
+            } else if (key == "Tab"){
+                this.tabLevel += 1;
+                this.setupTabLevel();
+                e.preventDefault();
             }
 
 		};
 
         textBlock.onkeyup = (e) => {
             let key = e.key || e.keyCode;
-            if (key == "ArrowRight" || key == "ArrowLeft" || ((key == "ArrowDown" && this.currentPointerSpot != textBlock.textContent.length) || (key == "ArrowUp" && this.currentPointerSpot != 0))){
+            if (key == "ArrowRight" || key == "ArrowLeft" || key == "ArrowDown" || key == "ArrowUp"){
                 this.setCurrentSpot();
+                if (key == "ArrowRight" || key == "ArrowLeft"){
+                    this.controller.resetPosition = true;
+                }
             }
         };
 	}

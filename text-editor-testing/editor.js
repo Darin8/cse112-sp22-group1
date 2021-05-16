@@ -3,10 +3,12 @@ let contentWrapper = document.getElementById("contentWrapper");
 export var blockArray = [];
 var idTable = [];
 var controller = {
+	creatingFromBullet: false,
+	currentTabLevel: 0,
+	resetPosition: true,
 	currentBlockIndex: 0,
 	addNewBlock: () => {
 		let newBlock = new TextBlock(controller, (success) => {
-			console.log(blockArray.length - 1);
 			if (controller.currentBlockIndex < blockArray.length - 1){
 				contentWrapper.insertBefore(newBlock, blockArray[controller.currentBlockIndex + 1]);
 				blockArray.splice(controller.currentBlockIndex + 1, 0, newBlock);
@@ -21,20 +23,16 @@ var controller = {
 	},
 	moveToNextBlock: () => {
 		let currentBlock = blockArray[controller.currentBlockIndex];
-		console.log("excecutes");
 		if (controller.currentBlockIndex < blockArray.length - 1){
-			console.log("in here");
 			let nextBlock = blockArray[controller.currentBlockIndex + 1];
 			nextBlock.moveToSpot(currentBlock.currentPointerSpot, false);
 		}
 	},
 	moveToPreviousBlock: () => {
 		let currentBlock = blockArray[controller.currentBlockIndex];
-		console.log("excecutes");
 		if (controller.currentBlockIndex > 0){
-			console.log("in here");
 			let nextBlock = blockArray[controller.currentBlockIndex - 1];
-			nextBlock.moveToSpot(currentBlock.currentPointerSpot, false);
+			nextBlock.moveToSpot(currentBlock.currentPointerSpot, true);
 		}
 	},
 	removeBlock: () => {
@@ -44,8 +42,7 @@ var controller = {
 		console.log(controller.currentBlockIndex);
 		let nextBlock = blockArray[controller.currentBlockIndex];
 		console.log(nextBlock);
-		nextBlock.moveToSpot(0, false);
-		
+		nextBlock.moveToSpot(100000, false);
 		contentWrapper.removeChild(currentBlock);
 	}
 }
@@ -57,8 +54,4 @@ document.addEventListener("DOMContentLoaded", () => {
 		controller.currentBlockIndex = blockArray.length - 1;
 		newBlock.focus();
 	});
-});
-
-document.addEventListener("click", (e) => {
-	console.log(e);
 });

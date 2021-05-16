@@ -8,53 +8,30 @@ html, body, section, .full-height {
     user-select: all;
 } 
 
+body{
+    margin: 0;
+}
+
 div{
     font-size: 18px;
     line-height: 26px;
 }
-
-#textBlock {
-    font-family: "SF-Pro";
+#contentWrapper {
     border: none;
     overflow: auto;
     outline: none;
-    resize: none;
-    width: 94%;
     padding: 10px;
+    display: block;
 }
 
-#textBlock:empty:before{
-    content: attr(placeholder);
-    color: gray;
+.text-block{
+    background-color: white;
 }
 
-.notesList:empty::before{
-    content: attr(placeholder);
-    color: gray;
-}
-
-.notesList{
-    color: black;
-}
-
-.header1{
-    font-size: 42px;
-    line-height: 50px;
-    font-weight: bold;
-    color: black;
-}
-
-.header2{
-    font-size: 28px;
-    line-height: 36px;
-    font-weight: bold;
-    color: black;
-}
-
-
-.row {
-    display: flex;
-    flex-direction: row;
+.noteContainer{
+    margin-left: 20px;
+    display: list-item;
+    align-items: baseline;
 }
 
 #markdown {
