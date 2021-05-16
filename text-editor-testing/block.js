@@ -1,10 +1,7 @@
 import {blockArray} from "./editor.js";
 import * as shadow from "./node_modules/shadow-selection-polyfill/shadow.js";
-var script = document.createElement("SCRIPT");
-script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js';
-script.type = 'text/javascript';
 const tabSize = 20;
-document.getElementsByTagName("head")[0].appendChild(script);
+const paddingSize = 10;
 
 export class TextBlock extends HTMLElement{
 	constructor(controller, callback){
@@ -18,7 +15,8 @@ export class TextBlock extends HTMLElement{
             this.attachShadow({ mode: "open" });
             this.shadowRoot.appendChild(blockTemplate.content.cloneNode(true));
             this.root = this.shadowRoot;
-            this.contentEditable = true;
+            this.kind = "paragraph";
+            this.initialHeight = 3;
             this.controller = controller;
             this.shadowRoot.getElementById("textBlock").classList.add("unstylized");
             this.currentBlock = null;
@@ -42,11 +40,11 @@ export class TextBlock extends HTMLElement{
             let preCaretRange = range.cloneRange();
             preCaretRange.selectNodeContents(container);
             preCaretRange.setEnd(range.endContainer, range.endOffset);
-            this.currentPointerSpot = (range.getClientRects()[0] != undefined) ? range.getClientRects()[0].x : (this.tabLevel * tabSize) + 18;
-            this.currentPointerHeight = (range.getClientRects()[0] != undefined) ? range.getClientRects()[0].y - container.getBoundingClientRect().top : 2;
+            this.currentPointerSpot = (range.getClientRects()[0] != undefined) ? range.getClientRects()[0].x : (this.tabLevel * tabSize) + paddingSize;
+            this.currentPointerHeight = (range.getClientRects()[0] != undefined) ? range.getClientRects()[0].y - container.getBoundingClientRect().top : this.initialHeight;
         } else {
-            this.currentPointerSpot = (this.tabLevel * tabSize) + 18;
-            this.currentPointerHeight = 2;
+            this.currentPointerSpot = (this.tabLevel * tabSize) + paddingSize;
+            this.currentPointerHeight = this.initialHeight;
         }
         
     }
@@ -109,6 +107,8 @@ export class TextBlock extends HTMLElement{
             this.classList.remove(this.classList[0]);
         }
         this.controller.creatingFromBullet = false;
+        this.kind = "header1";
+        this.initialHeight = 0;
         textBlock.setAttribute("placeholder", "Header 1");
         textBlock.classList.add("header1");
         textBlock.innerHTML = "";
@@ -123,6 +123,8 @@ export class TextBlock extends HTMLElement{
             this.classList.remove(this.classList[0]);
         }
         this.controller.creatingFromBullet = false;
+        this.kind = "header 2";
+        this.initialHeight = 0;
         textBlock.setAttribute("placeholder", "Header 2");
         textBlock.classList.add("header2");
         textBlock.innerHTML = "";
@@ -137,6 +139,8 @@ export class TextBlock extends HTMLElement{
             this.classList.remove(this.classList[0]);
         }
         this.controller.creatingFromBullet = true;
+        this.kind = "bullet";
+        this.initialHeight = 3;
         textBlock.setAttribute("placeholder", "Note");
         this.classList.add("noteContainer");
         textBlock.classList.add("note");
@@ -151,6 +155,8 @@ export class TextBlock extends HTMLElement{
         while(this.classList.length > 0){
             this.classList.remove(this.classList[0]);
         }
+        this.kind = "parragraph";
+        this.initialHeight = 3;
         textBlock.classList.add("unstylized");
         textBlock.setAttribute("placeholder", 'Type "/" to create a block');
         textBlock.innerHTML = "";
@@ -160,17 +166,20 @@ export class TextBlock extends HTMLElement{
     setupTabLevel(){
         this.style.position = "relative";
         this.style.left = (this.tabLevel * tabSize) + "px";
-        this.setCurrentSpot();
         this.controller.currentTabLevel = this.tabLevel;
+        this.setCurrentSpot();
     }
 
 	connectedCallback(){
 		let textBlock = this.shadowRoot.getElementById("textBlock");
 		textBlock.focus();
+        
+        document.addEventListener(shadow.eventName, () => {
+            blockArray[this.controller.currentBlockIndex].setCurrentSpot();
+        });
 
 		textBlock.addEventListener("input",() =>{
 			let content = textBlock.innerHTML;
-            console.log(content);
             this.setCurrentSpot();
 			if (content == "#&nbsp;"){
 				this.setupHeader1();
@@ -183,7 +192,6 @@ export class TextBlock extends HTMLElement{
 			} else if (content == "<br>"){
                 textBlock.innerHTML = "";
             } else if (textBlock.textContent != ""){
-                console.log("this");
                 this.controller.resetPosition = true;
             }
 		});
@@ -200,13 +208,14 @@ export class TextBlock extends HTMLElement{
             }
         };
 
+        
+
 		textBlock.onkeydown = (e)=>{
 			let key = e.key || e.keyCode;
 			if (key == "Backspace" || key == "Delete"){
-                console.log(textBlock.innerHTML);
                 let tabLevelNotZero = this.tabLevel > 0;
-                let currentSpot18 = this.currentPointerSpot - (this.tabLevel * tabSize) == 18;
-                let currentSpotNote = this.currentPointerSpot - (this.tabLevel * tabSize) == 38 && this.classList.contains("noteContainer");
+                let currentSpot18 = this.currentPointerSpot - (this.tabLevel * tabSize) == paddingSize;
+                let currentSpotNote = this.currentPointerSpot - (this.tabLevel * tabSize) == paddingSize + 20 && this.classList.contains("noteContainer");
                 let isAtBegining = currentSpot18 || currentSpotNote;
                 if (textBlock.innerHTML == "" && textBlock.getAttribute('placeholder') == 'Type "/" to create a block' && blockArray.length > 1){
                     this.controller.removeBlock();
@@ -233,13 +242,13 @@ export class TextBlock extends HTMLElement{
                     e.preventDefault();
                 }
 			} else if (key == "ArrowDown"){
-                let lineheight = (textBlock.classList.contains("header1")) ? 50 : ((textBlock.classList.contains("header2")) ? 36 : 26);
+                let lineheight = (textBlock.classList.contains("header1")) ? 80 : ((textBlock.classList.contains("header2")) ? 57 : ((this.kind == "bullet") ? 47 : 42));
                 if (this.currentPointerHeight > textBlock.offsetHeight - lineheight){
                     this.controller.moveToNextBlock();
                 } 
             } else if (key == "ArrowUp"){
-                let lineheight = (textBlock.classList.contains("header1")) ? 50 : ((textBlock.classList.contains("header2")) ? 36 : 26);
-                if (this.currentPointerHeight < lineheight){
+                let lineheight = (textBlock.classList.contains("header1")) ? 50 : ((textBlock.classList.contains("header2")) ? 36 : 28);
+                if (this.currentPointerHeight < lineheight + this.initialHeight){
                     this.controller.moveToPreviousBlock();
                 } 
             } else if (key == "Tab"){

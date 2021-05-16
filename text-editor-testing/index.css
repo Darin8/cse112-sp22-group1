@@ -29,10 +29,16 @@ div{
 }
 
 .noteContainer{
+    margin-top: 7px;
+    margin-bottom: 7px;
     margin-left: 20px;
     display: list-item;
-    align-items: baseline;
+    list-style-type: circle;
+    list-style-position: outside;
 }
+
+/*
+.noteContainer:before{content: '\f081';} */
 
 #markdown {
     overflow: auto;
