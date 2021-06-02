@@ -2,12 +2,10 @@ import { TrackerBlock } from "./trackerBlock.js";
 import { createEditor } from './blockController.js';
 import { currentObject } from "../index.js";
 
-// tracker side menu web component
+/**
+ * Tracker menu web component
+ */
 export class TrackerMenu extends HTMLElement {
-    static get observedAttributes() {
-        return ['open'];
-    }
-
     constructor(title) {
         super();
 		this.attachShadow({ mode: 'open' });
@@ -96,9 +94,15 @@ export class TrackerMenu extends HTMLElement {
         </div>
         `;
 
-        this.title = title;
+        this.heading =  this.shadowRoot.querySelector(".tracker_header h1");
         this.closeButton = this.shadowRoot.querySelector(".close_button");
         this.editor = this.shadowRoot.getElementById("editor");
+
+        this.title = title;
+    }
+
+    static get observedAttributes() {
+        return ['open'];
     }
 
     attributeChangedCallback(attr, oldVal, newVal) {
@@ -108,7 +112,6 @@ export class TrackerMenu extends HTMLElement {
     }
 
     connectedCallback() {
-        //console.log('can this event print');
         this.closeButton.addEventListener("click", this.close);
     }
 
@@ -132,8 +135,12 @@ export class TrackerMenu extends HTMLElement {
         }
     }
 
+    get title() {
+        return this.heading.textContent;
+    }
+
     set title(text) {
-        this.shadowRoot.querySelector(".tracker_header h1").innerText = text;
+       this.heading.textContent = text;
     }
 
     close() {

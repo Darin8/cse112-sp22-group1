@@ -364,9 +364,7 @@ export class PageHeader extends HTMLElement {
 	}
 
 	set title(title) {
-		console.log("this");
 		this.shadowRoot.getElementById("title_page").innerHTML = title;
-		console.log(this.h1);
 	}
 
 	get title() {

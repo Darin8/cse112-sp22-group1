@@ -21,13 +21,15 @@ import {GeneralSettingsPanel} from './generalSettingsPanel.js';
             Inside this tag, add your web component. See themePanel.js for an example.
             <your-panel></your-panel>
         </settings-panel>
+    
+    SettingsMenu will automatically link a tab to the next panel that comes after it.
 */
 const settingsTemplate = `
     <settings-tab slot="settings-tab" title="Settings">
         <img slot="icon" src="public/resources/generalSettingsIcon.png">
     </settings-tab>
     <settings-panel slot="settings-panel">
-        <general-settings-panel>
+        <general-settings-panel></general-settings-panel>
     </settings-panel>
 
     <settings-tab slot="settings-tab" title="Theme">
@@ -39,15 +41,10 @@ const settingsTemplate = `
 `;
 
 export class SettingsMenu extends HTMLElement {
-    static get observedAttributes() {
-        return ['open'];
-    }
-
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
 
-        this.outerHTML
         this.shadowRoot.innerHTML = `
             <style>
                 @font-face {
@@ -77,7 +74,6 @@ export class SettingsMenu extends HTMLElement {
 
                     width: 40px;
                     height: 40px;
-
 
                     border: none;
                     background-color: transparent;
@@ -177,15 +173,21 @@ export class SettingsMenu extends HTMLElement {
         this.tabSlot.addEventListener('slotchange', () => this.linkPanels);
         this.panelSlot.addEventListener('slotchange', () => this.linkPanels);
 
-        this.headerTitle = this.shadowRoot.querySelector('.header h1');
+        this.menuTitle = this.shadowRoot.querySelector('.header h1');
     }
 
+    /**
+     * Add tabs and panels to the menu, and link tabs to panels.
+     * Create event listeners.
+     */
     connectedCallback() {
         this.innerHTML = settingsTemplate;
 
         this.hide();
 
-        Promise.all([customElements.whenDefined('settings-tab'), customElements.whenDefined('settings-panel')])
+        // Ensure that all elements are defined before linking the panels
+        Promise.all([customElements.whenDefined('settings-tab'), 
+                     customElements.whenDefined('settings-panel')])
             .then(() => this.linkPanels());
 
         this.addEventListener('click', event => {
@@ -197,14 +199,23 @@ export class SettingsMenu extends HTMLElement {
         })
     }
 
+    /**
+     * @returns { NodeListOf<SettingsTab> } Returns all tabs in the menu.
+     */
     tabs() {
         return this.querySelectorAll('settings-tab');
     }
 
+     /**
+     * @returns { NodeListOf<SettingsPanel> } Returns all panels in the menu.
+     */
     panels() {
         return this.querySelectorAll('settings-panel');
     }
 
+    /** 
+    * Connect each tab to a panel, and select a tab to display.
+    */
     linkPanels() {
         let tabs = this.tabs();
 
@@ -228,6 +239,10 @@ export class SettingsMenu extends HTMLElement {
         this.changeTab(selectedTab);
     }
 
+    /**
+     * Display the panel linked to selectedTab
+     * @param {SettingsTab} selectedTab
+     */
     changeTab(selectedTab) {
         let tabs = Array.from(this.tabs());
         let panels = Array.from(this.panels());
@@ -240,15 +255,19 @@ export class SettingsMenu extends HTMLElement {
         let selectedPanel = this.querySelector(`#${panelId}`);
 
         if (!selectedPanel) {
-            // oh no
-            console.log('panel not found');
+            throw new Error(`No panel with id ${panelId} was found for tab ${selectedTab.id}`);
         }
 
-        this.headerTitle.innerText = selectedTab.getAttribute('title');
+        // Set the menu title
+        this.menuTitle.innerText = selectedTab.getAttribute('title');
 
         selectedTab.selected = true;
         selectedPanel.hidden = false;
         selectedTab.focus();
+    }
+
+    static get observedAttributes() {
+        return ['open'];
     }
 
     attributeChangedCallback(attr, oldVal, newVal) {
@@ -286,12 +305,14 @@ export class SettingsMenu extends HTMLElement {
         this.open = false;
     }
 }
-
 customElements.define('settings-menu', SettingsMenu);
 
-// used to generate an id
+// Unique number used to generate an id for new tabs
 let tabId = 0;
 
+/**
+ * The HTML template for the SettingsTab element.
+ */
 let settingsTabTemplate = document.createElement('template');
 settingsTabTemplate.innerHTML = `
 <style>
@@ -317,16 +338,15 @@ settingsTabTemplate.innerHTML = `
 `;
 
 export class SettingsTab extends HTMLElement {
-    static get observedAttributes() {
-        return ['selected'];
-    }
-
     constructor() {
         super();
         this.attachShadow({mode:'open'});
         this.shadowRoot.appendChild(settingsTabTemplate.content.cloneNode(true));
     }
 
+    /**
+     * Generate an id and set default attribute values.
+     */
     connectedCallback() {
         this.setAttribute('role', 'tab');
         if (!this.id) {
@@ -336,14 +356,16 @@ export class SettingsTab extends HTMLElement {
         this.setAttribute('aria-selected', 'false');
     }
 
-    attributeChangedCallback() {
-        const value = this.hasAttribute('selected');
-        this.setAttribute('aria-selected', value);
+    static get observedAttributes() {
+        return ['selected'];
     }
 
-    set selected(value) {
-        value = Boolean(value);
-        if (value) {
+    attributeChangedCallback() {
+        this.setAttribute('aria-selected', this.hasAttribute('selected'));
+    }
+
+    set selected(isSelected) {
+        if (isSelected) {
             this.setAttribute('selected', '');
         } else {
             this.removeAttribute('selected');
@@ -356,6 +378,7 @@ export class SettingsTab extends HTMLElement {
 }
 customElements.define('settings-tab', SettingsTab);
 
+// Unique number used to generate an id for new panels.
 let panelId = 0;
 
 export class SettingsPanel extends HTMLElement {
@@ -363,7 +386,10 @@ export class SettingsPanel extends HTMLElement {
         super();
     }
 
-    connectedCallback() {
+    /**
+     * Generate an id and set default attribute values.
+     */
+     connectedCallback() {
         this.setAttribute('role', 'tabpanel');
         if (!this.id) {
             this.id = `settings-panel-generated-${panelId++}`;
