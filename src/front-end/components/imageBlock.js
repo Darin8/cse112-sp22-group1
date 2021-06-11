@@ -1,6 +1,5 @@
-//import * as localStorage from "../localStorage/userOperations.js";
-//import { currentObject } from "../index.js";
-//const fs = require("fs");
+import * as localStorage from "../localStorage/userOperations.js";
+import { currentObject } from "../index.js";
 
 let template = document.createElement("template");
 template.innerHTML = `
@@ -63,38 +62,51 @@ template.innerHTML = `
 	</style>
 	<div id="editorIcons" class="paragraphIcons"><img src="../public/resources/plusIcon.png" class="unfocusedIcons" id="plus" /><img src="../public/resources/sixDotIcon.png" class="unfocusedIcons" id="more" /></div>
 	
-	<form action='/api/images' method="post" enctype="multipart/form-data">
-  		<input type='file' name='image' />
-	</form>
+  	<input type='file' name='image' />
 
-	<image src="" alt="" />
+	<image id="output" src="" alt=""/>
 `;
 
-// export class ImageBlock extends HTMLElement {
-// 	constructor () {
-// 		super();
-// 		this.attachShadow({ mode: "open" });
-// 		this.shadowRoot.appendChild(template.content.cloneNode(true));
-// 		this.plus = this.shadowRoot.getElementById("plus");
-// 		this.more = this.shadowRoot.getElementById("more");
-// 		this.buffer = null
-// 	}
+export class ImageBlock extends HTMLElement {
+	constructor () {
+		super();
+		this.attachShadow({ mode: "open" });
+		this.shadowRoot.appendChild(template.content.cloneNode(true));
+		this.plus = this.shadowRoot.getElementById("plus");
+		this.more = this.shadowRoot.getElementById("more");
+		this.buffer = null
+	}
 
-// 	connectedCallback () {
-// 		// let imageBlock = this.shadowRoot.getElementById("imageBlock");
-// 		// //imageBlock.focus();
+	connectedCallback () {
 
-// 		// this.plus.onclick = () => {
-// 		// 	let imageInput = this.shadowRoot.querySelector("form > input[type=file]");
-// 		// 	this.shadowRoot.querySelector("img").src = imageInput;
-// 		// 	let image = imageInput.files[0];
-// 		// 	let fileBuffer = fs.readFile(image);
-// 		// 	this.buffer = fileBuffer;
-			
-// 		// 	localStorage.createImageBlock(null, null, this.buffer, (err, imageBlock) => {
+		this.plus.onclick = () => {
+			let offsetValue = textBlock.getBoundingClientRect().top + textBlock.offsetHeight + 105 > window.innerHeight ? - 100 : textBlock.offsetHeight + 5;
 
-// 		// 	});
-// 		// }
-// 	}
-// }
-// window.customElements.define("image-block", ImageBlock);
+		};
+
+		this.plus.onclick = () => {
+			let imageInput = this.shadowRoot.querySelector("form > input[type=file]").files[0];
+
+			console.log("this is an image file", imageInput);
+			let fileReader = new FileReader();
+			let file = null;
+			fileReader.onload = (e) => {
+				file = e.target.result
+				console.log("this is filereader", e);
+				this.buffer = e.target.result;
+
+				localStorage.createImageBlock(currentObject.id, "full", this.buffer, true, (err, imageBlock) => {
+					if (err) {
+						console.log(err);
+					} else {
+						console.log(imageBlock);
+						this.shadowRoot.querySelector("#output").src = imageBlock.data;
+					}
+				});
+			}
+			fileReader.readAsDataURL(imageInput);
+		}
+	}
+}
+
+window.customElements.define("image-block", ImageBlock);
