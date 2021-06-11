@@ -14,7 +14,7 @@ export function updateUserOnline (db, callback) {
 			try {
 				console.log("this is the user now", doc);
 				console.log("about to fetch");
-				fetch("http://localhost:3000/updateUser", {
+				fetch("https://boojoapi.bitfrost.app/updateUser", {
 					headers: {
 						"content-type": "application/json; charset=UTF-8"
 					},

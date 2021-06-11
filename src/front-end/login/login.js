@@ -27,7 +27,7 @@ logIn.onclick = (e) => {
 				console.log(user.index);
 				createUserPouch(db, user, (userData) => {
 					console.log(userData);
-					window.location.href = "http://localhost:8080/success";
+					window.location.href = "https://boojo.bitfrost.app/success";
 				});
 			}
 		});
@@ -50,7 +50,7 @@ createAccount.onclick = (e) => {
 				user.pwd = password.value;
 				createUserPouch(db, user, (userData) => {
 					console.log(userData);
-					window.location.href = "http://localhost:8080/success";
+					window.location.href = "https://boojo.bitfrost.app/success";
 				});
 			}
 		});

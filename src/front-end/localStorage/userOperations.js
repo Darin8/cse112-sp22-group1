@@ -83,7 +83,7 @@ export let db = new PouchDB("Users");
  * @param {singleParameterCallback} callback Sends user json data to the callback.
  */
  export function loginUser (email, pwd, callback) {
-	fetch("http://localhost:3000/readUser", {
+	fetch("https://boojoapi.bitfrost.app/readUser", {
 		headers: {
 			"content-type": "application/json; charset=UTF-8"
 		},
@@ -105,7 +105,7 @@ export let db = new PouchDB("Users");
  * @param {singleParameterCallback} callback Sends the new user object to the callback.
  */
 export function createUser (email, pwd, callback) {
-    fetch("http://localhost:3000/createUser", {
+    fetch("https://boojoapi.bitfrost.app/createUser", {
 		headers: {
 			"content-type": "application/json; charset=UTF-8"
 		},

@@ -76,7 +76,7 @@ export function getCurrentObject (urlFromRouter) {
 	}
 	localStorage.readUser((err, user) => {
 		if (err) {
-			window.location.href = "http://localhost:8080/login";
+			window.location.href = "https://boojo.bitfrost.app/login";
 		} else if (id === undefined || id === null) {
 			currentObject = user.index;
 		} else {
