@@ -242,7 +242,6 @@ export class TextBlock extends HTMLElement {
 	 * @param {singleParameterCallback} callback - callback for the end of the constructor function
 	 */
 	constructor (controller, itemObject, signifier, callback) {
-		console.trace();
 		super();
 		fetch("./components/block.html").then((response) => response.text()).then((html) => {
 			let parser = new DOMParser();
@@ -250,7 +249,6 @@ export class TextBlock extends HTMLElement {
 			let blockTemplate = blockTemplateFile.getElementById("block");
 			this.attachShadow({ mode: "open" });
 			this.shadowRoot.appendChild(blockTemplate.content.cloneNode(true));
-			this.root = this.shadowRoot;
 			this.characterIndex = 0;
 			this.kind = "paragraph";
 			this.initialHeight = 3;
@@ -286,7 +284,6 @@ export class TextBlock extends HTMLElement {
 			this.setupTabLevel();
 			callback(true);
 		})
-
 	}
 
 	/**
@@ -856,7 +853,7 @@ export class TextBlock extends HTMLElement {
 				this.setupTabLevel();
 				e.preventDefault();
 			} else if (key === "@" && this.kind === "event") {
-				if (this.atPressed) {
+				if (this.timeSetter) {
 					e.stopPropagation();
 					e.preventDefault();
 				} else {
@@ -875,7 +872,7 @@ export class TextBlock extends HTMLElement {
 					textBlock.setAttribute("dateFiller", dateFiller);
 				}
 			} else if (key === "#" && this.kind === "event") {
-				if (this.hashPressed) {
+				if (this.dateSetter) {
 					e.stopPropagation();
 					e.preventDefault();
 				} else {

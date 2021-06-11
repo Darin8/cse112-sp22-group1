@@ -1,4 +1,5 @@
 import * as localStorage from "../localStorage/userOperations.js";
+import * as dropdown from "../fillDropdown.js";
 import { currentObject, creationMenu, adderDropdown, navbar } from "../index.js";
 
 /**
@@ -155,25 +156,25 @@ export class PageHeader extends HTMLElement {
 					display: none;
 				}
 
-				@media screen and (max-width: 1250px) {
+				@media screen and (max-width: 1450px) {
 					.search_bar input {
 						width: 220px;
 					}
 				}
 
-				@media screen and (max-width: 1080px) {
+				@media screen and (max-width: 1280px) {
 					.search_bar input {
 						width: 170px;
 					}
 				}
 
-				@media screen and (max-width: 1020px) {
+				@media screen and (max-width: 1220px) {
 					.search_bar {
 						display: none;
 					}
 				}
 
-				@media screen and (max-width: 900px) {
+				@media screen and (max-width: 1100px) {
 					
 					:host {
 						margin-left: 20px;
@@ -358,37 +359,30 @@ export class PageHeader extends HTMLElement {
 	 */
 	connectedCallback () {
 		this.futureLogButton.addEventListener("click", () => {
-			if (currentObject.objectType == "index") {
-				adderDropdown.fillDropdown([{
-					title: "New Future Log",
-					listener: () => {
-						creationMenu.setKind("futureLog");
-						creationMenu.show();
-						adderDropdown.hide();
-					}
-				}, {
-					title: "New Collection",
-					listener: () => {
-						creationMenu.setKind("collection");
-						creationMenu.show();
-						adderDropdown.hide();
-					}
-				}]);
-				let searchbarShift = this.searchBar.style.display === "none" ? 0 : this.searchBar.getBoundingClientRect().width;
-				adderDropdown.setPosition(this.offsetHeight, window.innerWidth - 210 - searchbarShift);
-				adderDropdown.toggleDropdown();
-			}
+            let searchbarShift = this.searchBar.style.display === "none" ? 0 : this.searchBar.getBoundingClientRect().width;
+            dropdown.openCreationDropdown(this.offsetHeight, window.innerWidth - 210 - searchbarShift);
 		});
 
 		this.menuToggle.addEventListener("change", () => {
 			navbar.toggle();
 		});
+
+		this.h1.onblur = () => {
+			if (this.h1.contentEditable) {
+				currentObject.title = this.h1.innerText;
+				localStorage.updateCollection(currentObject, true, (err) => {
+					if (err) {
+						console.log(err);
+					}
+				});
+			}
+		};
 	}
 
 	/**
 	 * Makes header content editable
 	 */
-	makeEditabe () {
+	makeEditable () {
 		this.h1.contentEditable = true;
 	}
 

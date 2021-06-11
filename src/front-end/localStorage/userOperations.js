@@ -34,6 +34,7 @@ import {createUserPouch} from "./createFiles/createUser.js";
 import {deleteAudioBlockPouch} from "./deleteFiles/deleteAudioBlock.js";
 import {deleteCollectionPouch} from "./deleteFiles/deleteCollection.js";
 import {deleteEventPouch} from "./deleteFiles/deleteEvent.js";
+import {deleteFutureLogPouch} from "./deleteFiles/deleteFutureLog.js";
 import {deleteImageBlockPouch} from "./deleteFiles/deleteImageBlock.js";
 import {deleteSignifierPouch} from "./deleteFiles/deleteSignifier.js";
 import {deleteTaskPouch} from "./deleteFiles/deleteTask.js";
@@ -130,7 +131,7 @@ export function createUser (email, pwd, callback) {
  */
  export function updateUserFromMongo () {
 	updateUserOnline(db, (user) => {
-		console.log(user);
+		console.log("updated user" , user);
 	});
 }
 
@@ -203,7 +204,7 @@ export function createAudioBlock (parent, arrangement, data, shouldUpdate, callb
  */
 export function createCollection (title, parent, content, shouldUpdate, callback) {
 	createCollectionPouch(db, title, parent, content, (err, collection) => {
-		if (shouldUpdate) {
+		if (shouldUpdate && !err) {
 			updateUserFromMongo();
 		}
 		callback(err, collection);
@@ -276,8 +277,8 @@ export function createFutureLog (startDate, endDate, months, trackers, shouldUpd
  * @param {Boolean} shouldUpdate true if we should update the onlin db
  * @param {doubleParameterCallback} callback Either sends the monthlyLog or an error, if there is one, to the callback.
  */
-export function createMonthlyLog (parent, days, trackers, date, shouldUpdate, callback) {
-	createMonthlyLogPouch(db, parent, days, trackers, date, (error, month) => {
+export function createMonthlyLog (parent, days, trackers, date, endDate, shouldUpdate, callback) {
+	createMonthlyLogPouch(db, parent, days, trackers, date, endDate, (error, month) => {
 		if (shouldUpdate) {
 			updateUserFromMongo();
 		}
@@ -614,6 +615,22 @@ export function deleteTaskByID (id, shouldUpdate, callback) {
 }
 
 /**
+ * Deletes the futureLog passed in and its children.
+ *
+ * @param {Object} futureLog The object to be deleted.
+ * @param {Boolean} shouldUpdate true if we should update the onlin db
+ * @param {singleParameterCallback} callback Returns an error if there is one.
+ */
+ export function deleteFutureLog (futureLog, shouldUpdate, callback) {
+	deleteFutureLogPouch(db, futureLog.id, futureLog.parent, (err) => {
+		if (shouldUpdate) {
+			updateUserFromMongo();
+		}
+		callback(err);
+	});
+}
+
+/**
  * Deletes the textBlock passed in.
  *
  * @param {Object} textBlock The object to be deleted.
@@ -816,7 +833,7 @@ export function updateAudioBlockByID (id, shouldUpdate, callback) {
  */
 export function updateDailyLog (dailyLog, shouldUpdate, callback) {
 	updateDailyLogPouch(db, dailyLog, (err) => {
-		if (shouldUpdate) {
+		if (shouldUpdate && !err) {
 			updateUserFromMongo();
 		}
 		callback(err);
@@ -933,7 +950,7 @@ export function updateFutureLogByID (id, shouldUpdate, callback) {
  */
 export function updateCollection (collection, shouldUpdate, callback) {
 	updateCollectionPouch(db, collection, (error) => {
-		if (shouldUpdate) {
+		if (shouldUpdate && !error) {
 			updateUserFromMongo();
 		}
 		callback(error);

@@ -1,5 +1,7 @@
+import * as dropdown from "../fillDropdown.js";
 import {navbar, currentObject, adderDropdown, creationMenu} from "../index.js";
 import {router} from "../router.js";
+
 const tabspace = 3;
 
 /**
@@ -19,19 +21,37 @@ export class DropdownBlock extends HTMLElement {
         this.attachShadow({ mode: "open" });
         this.shadowRoot.innerHTML = `
 		<style>
-			@font-face {
+            :host {
 				font-family:"SF-Pro";
-				src: url("./public/fonts/SF-Pro.ttf");
-			}
 
-			#wrapper{
-				padding-bottom: 0;
-				width: calc(100% - 70px);
 				user-select: none; 
 				-webkit-user-select: none;
 				-moz-user-select: none; 
 				-khtml-user-select: none; 
 				-ms-user-select: none;
+            }
+
+			.noteContainer {
+				margin-top: 7px;
+				margin-bottom: 7px;
+				margin-left: 87px;
+				display: list-item;
+				list-style-type: disc;
+				list-style-position: outside;
+			}
+
+			.eventContainer {
+				margin-top: 7px;
+				margin-bottom: 7px;
+				margin-left: 87px;
+				display: list-item;
+				list-style-type: circle;
+				list-style-position: outside;
+			}
+			
+			#wrapper{
+				padding-bottom: 0;
+				width: calc(100% - 70px);
 			}
 
 			#title{
@@ -94,7 +114,7 @@ export class DropdownBlock extends HTMLElement {
             }
 
 			.singleItemWrapper{
-				border-top: 1px solid rgba(0,0,0,0.08);
+				border-top: 1px solid var(--border-color);
 			}
 
 			#editorIcons{
@@ -147,31 +167,31 @@ export class DropdownBlock extends HTMLElement {
 	 */
     connectedCallback () {
 		this.plus.onclick = () => {
+            let offsetValue = this.plus.getBoundingClientRect().top + this.plus.offsetHeight + 105 > window.innerHeight ? - 105 : this.plus.offsetHeight + 10;
+            dropdown.openCreationDropdown(this.plus.getBoundingClientRect().top + document.body.scrollTop + offsetValue, this.plus.getBoundingClientRect().left);
+		}
+
+        this.more.onclick = () => {
 			if (currentObject.objectType == "index") {
 				adderDropdown.fillDropdown([{
-					title: "New Future Log",
+					title: "Delete",
 					listener: () => {
 						creationMenu.setKind("futureLog");
 						creationMenu.show();
 						adderDropdown.hide();
 					}
-				}, {
-					title: "New Collection",
-					listener: () => {
-						creationMenu.setKind("collection");
-						creationMenu.show();
-						adderDropdown.hide();
-					}
 				}]);
-				adderDropdown.setPosition(this.plus.getBoundingClientRect().top + this.plus.offsetHeight + 10, this.plus.getBoundingClientRect().left);
-				adderDropdown.toggleDropdown();
+				let offsetValue = this.more.getBoundingClientRect().top + this.more.offsetHeight + 105 > window.innerHeight ? - 105 : this.more.offsetHeight + 10;
+				adderDropdown.setPosition(this.more.getBoundingClientRect().top + document.body.scrollTop + offsetValue, this.more.getBoundingClientRect().left);
 			}
 		}
+
 		this.removeAttribute("closed");
         this.button.addEventListener("click", () => {
 			this.toggleItems();
 		});
 		this.header.addEventListener("click", () => {
+			console.log(this.item);
 			this.navigateToObject();
 		})
 		// This.contentWrapper.style.display = 'none';
